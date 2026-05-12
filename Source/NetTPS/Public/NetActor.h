@@ -1,85 +1,70 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "NetActor.generated.h"
 
+class UMaterialInstanceDynamic;
+class UStaticMeshComponent;
+
+// 네트워크 소유권, 회전 보간, 머티리얼 색상 동기화를 테스트하는 액터입니다.
 UCLASS()
 class NETTPS_API ANetActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+
+public:
 	ANetActor();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	// 네트워크 상태 디버그 출력
+	void PrintNetLog();
+
+protected:
+	virtual void BeginPlay() override;
+
 public:
 	UPROPERTY(VisibleAnywhere)
-	class UStaticMeshComponent* meshComp;
-	
-	void PrintNetLog();
-	
-	// Onwer 검출 영역
+	UStaticMeshComponent* meshComp;
+
+	// Owner 탐색 범위
 	UPROPERTY(EditAnywhere)
 	float searchDistance = 200.0f;
-	
-	// Owner설정
+
+	// 탐색 범위 안의 플레이어를 Owner로 설정
 	void FindOwner();
-	
-	
-	// 회전 값 동기화 변수
+
+	// 서버 회전 값을 클라이언트에 동기화
 	UPROPERTY(ReplicatedUsing=OnRep_RotYaw)
 	float RotYaw = 0.0f;
-	
+
 	UFUNCTION()
 	void OnRep_RotYaw();
-	
+
 	float currentTime;
 	float lastTime;
-	
-	
-public:
+
 	UPROPERTY()
-	class UMaterialInstanceDynamic* Mat;
-	// 재질에 동기화될 색상
+	UMaterialInstanceDynamic* Mat;
+
+	// 동기화할 머티리얼 색상
 	UPROPERTY(ReplicatedUsing=OnRep_ChangeMatColor)
 	FLinearColor MatColor;
+
 	UFUNCTION()
 	void OnRep_ChangeMatColor();
-	
-	
-	
-public:
+
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_ChangeColor(const FLinearColor newColor);
+
 	UFUNCTION(Client, Unreliable)
 	void ClientRPC_ChangeColor(const FLinearColor newColor);
+
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastRPC_ChangeColor(const FLinearColor newColor);
-	
-	
-	FTimerHandle handle;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 
+	FTimerHandle handle;
 };

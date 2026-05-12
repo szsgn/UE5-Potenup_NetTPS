@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "NetGameInstance.h"
 
 #include <string>
@@ -26,17 +23,6 @@ void UNetGameInstance::Init()
 		sessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UNetGameInstance::OnJoinSessionComplete);
 		sessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UNetGameInstance::OnDestroySessionComplete);
 		
-		/*
-		FTimerHandle handle;
-		GetWorld()->GetTimerManager().SetTimer(handle,
-			FTimerDelegate::CreateLambda([&]
-			{
-				//CreateSession(mySessionName, 10);
-				FindOtherSessions();
-			}			
-			), 2, false	);
-			*/
-		
 	}
 	
 	if ( GEngine )
@@ -58,7 +44,7 @@ void UNetGameInstance::CreateSession(FString roomName, int32 playerCount)
 	sessionSettings.bIsLANMatch = subsysName == "NULL";
 	
 	// 3. 매칭이 온라인을 통해 노출될지 여부
-	// false 이면 초대를 통해서만 입장이 가능하다.
+	// false이면 초대를 통해서만 입장이 가능합니다.
 	sessionSettings.bShouldAdvertise = true;
 	
 	// 4. 온라인 상태(presence) 정보를 활용할지 여부
@@ -79,7 +65,7 @@ void UNetGameInstance::CreateSession(FString roomName, int32 playerCount)
 	sessionSettings.Set(FName("HOST_NAME"), StringBase64Encode(mySessionName), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	
 	
-	// netID
+	// 로컬 플레이어의 네트워크 ID로 세션 생성을 요청합니다.
 	FUniqueNetIdPtr netID = GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
 		
 	PRINTLOG(TEXT("Create Session Start : %s"), *mySessionName);
@@ -135,8 +121,7 @@ void UNetGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 	PRINTLOG(TEXT("Search Result Count : %d"), results.Num());
 	
 	// 유효성 체크
-	for ( int i = 0; i < results.Num(); i++ )	
-	//for ( auto sr : results )
+	for ( int i = 0; i < results.Num(); i++ )
 	{
 		auto sr = results[i];
 		if ( sr.IsValid() == false )
@@ -156,9 +141,6 @@ void UNetGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 		sessionInfo.roomName = StringBase64Decode(roomName);
 		sessionInfo.hostName = StringBase64Decode(hostName);
 		
-		// 세션주인(방장) 이름
-		//FString userName = sr.Session.OwningUserName;
-		
 		// 입장가능한 플레이어 수
 		int32 maxPlayerCount = sr.Session.SessionSettings.NumPublicConnections;
 		// 현재 입장한 플레이어 수 ( 최대인원수 - 현재입장가능한 수 )
@@ -170,7 +152,6 @@ void UNetGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 		sessionInfo.pingSpeed = sr.PingInMs;
 		
 		PRINTLOG(TEXT("%s"), *sessionInfo.ToString());
-		//PRINTLOG(TEXT("%s : %s(%s) - (%d/%d), %dms"), *roomName, *hostName, *userName, currentPlayerCount, maxPlayerCount, pingSpeed);
 		
 		// 델리게이트로 위젯에 알려주기		
 		onSearchCompleted.Broadcast(sessionInfo);		
@@ -236,7 +217,7 @@ bool UNetGameInstance::IsInRoom()
 
 FString UNetGameInstance::StringBase64Encode(const FString& str)
 {
-	// Set 할 때 :: FString -> UTF8(std::string) -> TArray<uint8> -> base64 로 Encode
+	// 저장: FString -> UTF8(std::string) -> TArray<uint8> -> Base64
 	std::string utf8String = TCHAR_TO_UTF8(*str);
 	TArray<uint8> arrayData = TArray<uint8>((uint8*)(utf8String.c_str()), utf8String.length());
 	return FBase64::Encode(arrayData);
@@ -244,7 +225,7 @@ FString UNetGameInstance::StringBase64Encode(const FString& str)
 
 FString UNetGameInstance::StringBase64Decode(const FString& str)
 {
-	// Get 할 때 :: base64 로 Decode -> TArray<uint8> -> TCHAR
+	// 읽기: Base64 -> TArray<uint8> -> TCHAR
 	TArray<uint8> arrayData;
 	FBase64::Decode(str, arrayData);
 	std::string utf8String((char*)(arrayData.GetData()), arrayData.Num());

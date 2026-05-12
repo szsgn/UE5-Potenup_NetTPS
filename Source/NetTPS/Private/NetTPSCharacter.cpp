@@ -28,22 +28,19 @@ ANetTPSCharacter::ANetTPSCharacter()
 	bReplicates = true;
 	SetReplicateMovement(true);
 	
-	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 		
-	// Don't rotate when the controller rotates. Let that just affect the camera.
+	// 컨트롤러 회전은 카메라에만 반영합니다.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// Configure character movement
-	//GetCharacterMovement()->bOrientRotationToMovement = true;
+	// TPS 조작에 맞게 캐릭터 이동을 설정합니다.
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
-	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
-	// instead of recompiling to adjust them
+	// 이동 튜닝 값은 캐릭터 블루프린트에서 빠르게 조정할 수 있습니다.
 	GetCharacterMovement()->JumpZVelocity = 500.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
@@ -51,20 +48,19 @@ ANetTPSCharacter::ANetTPSCharacter()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
-	// Create a camera boom (pulls in towards the player if there is a collision)
+	// 카메라 붐
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 150.0f;
 	CameraBoom->SetRelativeLocation(FVector(0.0f, 40.0f, 60.0f));
 	CameraBoom->bUsePawnControlRotation = true;
 
-	// Create a follow camera
+	// 추적 카메라
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	// Mesh와 Anim Blueprint 참조는 파생 블루프린트에서 설정합니다.
 
 	GunComp = CreateDefaultSubobject<USceneComponent>(TEXT("GunComp"));
 	GunComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R"));
@@ -72,7 +68,7 @@ ANetTPSCharacter::ANetTPSCharacter()
 	GunComp->SetRelativeRotation(FRotator(0.0f, 0.0f, 12.399401f));
 
 
-	// HealthBar Component
+	// 체력 바 위젯 컴포넌트
 	hpUIComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
 	hpUIComp->SetupAttachment(GetMesh());
 
@@ -103,50 +99,37 @@ void ANetTPSCharacter::BeginPlay()
 		}
 	}
 	
-	// 클라이언트에서는 컨트롤러가 있을때
-	//if ( HasAuthority() == false && IsLocallyControlled() )
-	{
-	//	InitUIWidget();		
-	}
-	
-	
-	
-	
-	
-	
-	
-	
 }
 
 void ANetTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	// Set up action bindings
+	// 입력 액션 바인딩
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
-		// Jumping
+		// 점프
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		// Moving
+		// 이동
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANetTPSCharacter::Move);
 		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANetTPSCharacter::Look);
 
-		// Looking
+		// 시점
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANetTPSCharacter::Look);
 		
-		// TakePistol
+		// 권총 줍기
 		EnhancedInputComponent->BindAction(TakePistolAction, ETriggerEvent::Started, this, &ANetTPSCharacter::TakePistol);
 		
-		// ReleasePistol
+		// 권총 버리기
 		EnhancedInputComponent->BindAction(ReleaseAction, ETriggerEvent::Started, this, &ANetTPSCharacter::ReleasePistol);
 		
-		// Fire
+		// 사격
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ANetTPSCharacter::Fire);
 		
-		// Reload
+		// 재장전
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &ANetTPSCharacter::ReloadPistol);
 		
-		// Voice Chat
+		// 음성 채팅
 		EnhancedInputComponent->BindAction(voiceAction, ETriggerEvent::Started, this, &ANetTPSCharacter::StartVoiceChat);
 		EnhancedInputComponent->BindAction(voiceAction, ETriggerEvent::Completed, this, &ANetTPSCharacter::StopVoiceChat);
 		
@@ -159,19 +142,15 @@ void ANetTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void ANetTPSCharacter::Move(const FInputActionValue& Value)
 {
-	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
-	// route the input
 	DoMove(MovementVector.X, MovementVector.Y);
 }
 
 void ANetTPSCharacter::Look(const FInputActionValue& Value)
 {
-	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	// route the input
 	DoLook(LookAxisVector.X, LookAxisVector.Y);
 }
 
@@ -179,17 +158,13 @@ void ANetTPSCharacter::DoMove(float Right, float Forward)
 {
 	if (GetController() != nullptr)
 	{
-		// find out which way is forward
 		const FRotator Rotation = GetController()->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// add movement 
 		AddMovementInput(ForwardDirection, Forward);
 		AddMovementInput(RightDirection, Right);
 	}
@@ -199,7 +174,6 @@ void ANetTPSCharacter::DoLook(float Yaw, float Pitch)
 {
 	if (GetController() != nullptr)
 	{
-		// add yaw and pitch input to controller
 		AddControllerYawInput(Yaw);
 		AddControllerPitchInput(Pitch);
 	}
@@ -207,13 +181,11 @@ void ANetTPSCharacter::DoLook(float Yaw, float Pitch)
 
 void ANetTPSCharacter::DoJumpStart()
 {
-	// signal the character to jump
 	Jump();
 }
 
 void ANetTPSCharacter::DoJumpEnd()
 {
-	// signal the character to stop jumping
 	StopJumping();
 }
 
@@ -229,10 +201,8 @@ void ANetTPSCharacter::PostNetInit()
 
 void ANetTPSCharacter::TakePistol(const FInputActionValue& Value)
 {
-	// 총을 소유하지 않고 있다면 범위 안에 있는 총을 잡는다.
+	// 이미 권총을 들고 있으면 처리하지 않습니다.
 	
-	// 필요속성 : 총 소유 여부, 소유중인 총, 총 검색 범위
-	// 1. 총을 잡고 있지 않다면
 	if ( bHasPistol )
 	{
 		return;
@@ -260,7 +230,7 @@ void ANetTPSCharacter::AttachPistol(AActor* pistolActor)
 
 void ANetTPSCharacter::ReleasePistol(const FInputActionValue& Value)
 {
-	// 총을 잡고 있지 않다면 처리하지 않는다.
+	// 권총을 들고 있지 않거나 재장전 중이면 처리하지 않습니다.
 	if ( !bHasPistol || IsReloading || IsLocallyControlled() == false )
 	{
 		return;
@@ -283,8 +253,7 @@ void ANetTPSCharacter::DetachPistol(AActor* pistolActor)
 
 void ANetTPSCharacter::Fire(const FInputActionValue& Value)
 {	
-	// 총을 들고 있지 않다면 처리하지 않는다.
-	// 총알이 0개면 처리하지 않는다.
+	// 권총을 들고 있지 않거나 탄약이 없으면 처리하지 않습니다.
 	if ( !bHasPistol || BulletCount <= 0 || IsReloading )
 	{
 		return;
@@ -292,32 +261,6 @@ void ANetTPSCharacter::Fire(const FInputActionValue& Value)
 	
 	ServerRPC_Fire();
 	
-	/*
-	// 총쏘기
-	FHitResult hitInfo;
-	FVector startPos = FollowCamera->GetComponentLocation();
-	FVector endPos = startPos + FollowCamera->GetForwardVector() * 10000.0f;
-	FCollisionQueryParams params;
-	params.AddIgnoredActor(this);
-	bool bHit = GetWorld()->LineTraceSingleByChannel(hitInfo, startPos, endPos, ECC_Visibility, params);	
-	
-	if ( bHit )
-	{
-		// 맞은 부위에 파티클 표시
-		if ( GunEffect )
-		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GunEffect, hitInfo.Location, FRotator(), true);
-		}
-		
-		// 맞은 대상이 상대방일 경우 데미지 처리
-		auto otherPlayer = Cast<ANetTPSCharacter>(hitInfo.GetActor());
-		if ( otherPlayer )
-		{
-			otherPlayer->DamageProcess();
-		}
-		
-	}
-	*/
 	
 	
 	
@@ -335,7 +278,7 @@ void ANetTPSCharacter::InitUIWidget()
 {
 	PRINTLOG(TEXT("[%s] Begin"), Controller ? TEXT("PLAYER") : TEXT("Not Player"));
 	
-	// Player 가 제어중이 아니라면 처리하지 않는다.
+	// 플레이어 컨트롤러가 없으면 UI를 생성하지 않습니다.
 	auto pc = Cast<ANetPlayerController>(Controller);
 	if ( pc == nullptr )
 	{
@@ -355,17 +298,16 @@ void ANetTPSCharacter::InitUIWidget()
 		hp = MaxHP;
 		mainUI->HP = 1.0f;
 		
-		// 총알 모두 제거
+		// 기존 탄약 UI를 초기화합니다.
 		mainUI->RemoveAllAmmo();
 		
 		BulletCount = MaxBulletCount;
-		// 총알추가
 		for ( int i = 0; i < BulletCount; ++i )
 		{
 			mainUI->AddBullet();
 		}
 		
-		// mainUI 가 있기 때문에 해당 컴포넌트는 비활성화
+		// 로컬 메인 UI가 있으므로 머리 위 체력 바는 숨깁니다.
 		if ( hpUIComp )
 		{
 			hpUIComp->SetVisibility(false);
@@ -391,7 +333,7 @@ void ANetTPSCharacter::OnRep_BulletCount()
 
 void ANetTPSCharacter::ReloadPistol(const FInputActionValue& Value)
 {
-	// 총 소지중이 아니라면 아무 처리하지 않는다.
+	// 권총을 들고 있지 않거나 이미 재장전 중이면 처리하지 않습니다.
 	if ( !bHasPistol || IsReloading )
 	{
 		return;
@@ -411,7 +353,7 @@ void ANetTPSCharacter::InitAmmoUI()
 
 void ANetTPSCharacter::OnRep_HP()
 {
-	// 죽음처리
+	// 체력이 0 이하가 되면 사망 상태로 전환합니다.
 	if ( HP <= 0.0f )
 	{
 		isDead = true;
@@ -421,13 +363,13 @@ void ANetTPSCharacter::OnRep_HP()
 		GetCharacterMovement()->DisableMovement();
 	}	
 	
-	// UI 에 할당할 퍼센트 계산
+	// UI에 반영할 체력 비율을 계산합니다.
 	float percent = hp / MaxHP;
 	
 	if ( mainUI )
 	{
 		mainUI->HP = percent;
-		// 피격효과 처리
+		// 로컬 플레이어 UI와 피격 효과를 갱신합니다.
 		mainUI->PlayDamageAnimation();
 		
 		if ( damageCameraShake )
@@ -462,10 +404,10 @@ void ANetTPSCharacter::SetHP(float value)
 
 void ANetTPSCharacter::DamageProcess()
 {
-	// 체력을 감소시킨다.
+	// 체력을 감소시킵니다.
 	HP -= 1.0f;	
 	
-	// 사망처리 체크
+	// 사망 상태를 갱신합니다.
 	if ( HP <= 0.0f )
 	{
 		isDead = true;
@@ -480,7 +422,7 @@ void ANetTPSCharacter::DieProcess()
 	pc->SetShowMouseCursor(true);
 	GetFollowCamera()->PostProcessSettings.ColorSaturation = FVector4(0.0f, 0.0f, 0.0f, 1.0f);
 	
-	// Die UI 표시
+	// 게임오버 UI 표시
 	mainUI->GameoverUI->SetVisibility(ESlateVisibility::Visible);
 }
 
@@ -490,7 +432,7 @@ void ANetTPSCharacter::Tick(float DeltaSeconds)
 	
 	PrintNetLog();	
 	
-	// 빌보드
+	// 머리 위 체력 바가 항상 카메라를 바라보도록 회전합니다.
 	if ( hpUIComp && hpUIComp->GetVisibleFlag() )
 	{
 		FVector CamLoc = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraLocation();
@@ -508,13 +450,6 @@ void ANetTPSCharacter::PrintNetLog()
 	
 	DrawDebugString( GetWorld(), GetActorLocation() + FVector::UpVector * 100.0f, logStr, nullptr, FColor::White, 0, true, 1);
 	
-	/*
-	const FString ownerName = GetOwner() != nullptr ? GetOwner()->GetName() : TEXT("No Owner");
-	
-	const FString logStr = FString::Printf(TEXT("Connection : %s\nOwnerName : %s"), *conStr, *ownerName);
-	
-	DrawDebugString( GetWorld(), GetActorLocation() + FVector::UpVector * 100.0f, logStr, nullptr, FColor::White, 0, true, 1);
-	*/
 }
 
 void ANetTPSCharacter::PossessedBy(AController* NewController)
@@ -523,10 +458,6 @@ void ANetTPSCharacter::PossessedBy(AController* NewController)
 	
 	Super::PossessedBy(NewController);
 	
-	//if ( IsLocallyControlled() )
-	{
-//		InitUIWidget();
-	}
 	ClientRPC_InitUIWidget();
 	
 	PRINTLOG(TEXT("End"));
@@ -564,22 +495,21 @@ void ANetTPSCharacter::ClientRPC_Reload_Implementation()
 {
 	if ( mainUI )
 	{
-		// 총알 UI 제거
+		// 탄약 UI를 다시 구성합니다.
 		mainUI->RemoveAllAmmo();
 		
-		// 총알 UI 다시 세팅
 		for ( int i = 0; i < MaxBulletCount; i++ )
 		{
 			mainUI->AddBullet();
 		}		
 	}
-	// 재장전 완료상태로 처리
+	// 재장전 완료 상태로 전환합니다.
 	IsReloading = false;
 }
 
 void ANetTPSCharacter::ServerRPC_Reload_Implementation()
 {	
-	// 총알 개수 초기화
+	// 탄약 수를 초기화합니다.
 	BulletCount = MaxBulletCount;
 	ClientRPC_Reload();
 }
@@ -595,7 +525,7 @@ void ANetTPSCharacter::MulticastRPC_Fire_Implementation(bool bHit,
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GunEffect, hitInfo.Location, FRotator(), true);
 		}
 				
-		// Fire 애니메이션 재생
+		// 사격 애니메이션 재생
 		auto anim = Cast<UNetPlayerAnimInstance>(GetMesh()->GetAnimInstance());
 		if ( anim != nullptr )
 		{
@@ -606,7 +536,7 @@ void ANetTPSCharacter::MulticastRPC_Fire_Implementation(bool bHit,
 
 void ANetTPSCharacter::ServerRPC_Fire_Implementation()
 {
-	// 총쏘기
+	// 서버에서 카메라 방향으로 사격 판정을 수행합니다.
 	FHitResult hitInfo;
 	FVector startPos = FollowCamera->GetComponentLocation();
 	FVector endPos = startPos + FollowCamera->GetForwardVector() * 10000.0f;
@@ -616,19 +546,19 @@ void ANetTPSCharacter::ServerRPC_Fire_Implementation()
 	
 	if ( bHit )
 	{	
-		// 맞은 대상이 상대방일 경우 데미지 처리
+		// 맞은 대상이 플레이어면 데미지를 적용합니다.
 		auto otherPlayer = Cast<ANetTPSCharacter>(hitInfo.GetActor());
 		if ( otherPlayer )
 		{
 			otherPlayer->DamageProcess();
 			
-			// 스코어 처리
+			// 공격자의 점수를 갱신합니다.
 			auto ps = Cast<ANetPlayerState>(GetPlayerState());
 			ps->SetScore( ps->GetScore() + 1 );
 		}		
 	}
 	
-	// 총알 제거
+	// 탄약을 1발 소모합니다.
 	BulletCount--;
 	OnRep_BulletCount();
 	
@@ -638,18 +568,17 @@ void ANetTPSCharacter::ServerRPC_Fire_Implementation()
 void ANetTPSCharacter::MulticastRPC_ReleasePistol_Implementation(
 	AActor* pistolActor)
 {
-	// 총 분리
+	// 모든 클라이언트에서 권총을 분리합니다.
 	DetachPistol(pistolActor);
 }
 
 void ANetTPSCharacter::ServerRPC_ReleasePistol_Implementation()
 {
-	// 총 소유시
+	// 서버 상태를 권총 미소유로 갱신합니다.
 	if ( ownedPistol )
 	{
 		MulticastRPC_ReleasePistol(ownedPistol);
 		
-		// 미소유로 설정
 		bHasPistol = false;
 		ownedPistol->SetOwner(nullptr);
 		ownedPistol = nullptr;		
@@ -659,37 +588,31 @@ void ANetTPSCharacter::ServerRPC_ReleasePistol_Implementation()
 void ANetTPSCharacter::MulticastRPC_TakePistol_Implementation(
 	AActor* pistolActor)
 {
-	// 총 붙이기
+	// 모든 클라이언트에서 권총을 장착합니다.
 	AttachPistol(pistolActor);
 }
 
 void ANetTPSCharacter::ServerRPC_TakePistol_Implementation()
 {	
-	// 2. 월드에 있는 총을 모두 조사한다.
+	// 월드의 권총 중 소유자가 없고 가장 먼저 범위에 들어온 액터를 장착합니다.
 	for ( auto pistolActor : pistolActors )
 	{
-		// 3. 만약 총의 소유자가 있다면 검사하지 않는다.
 		if ( pistolActor->GetOwner() != nullptr )
 		{
 			continue;
 		}
 
-		// 4. 총과의 거리를 구한다.
 		float Distance = FVector::Dist(GetActorLocation(), pistolActor->GetActorLocation());
 		
-		// 5. 거리가 범위 안에 있다면
 		if ( Distance > DistanceToGun )
 		{
 			continue;
 		}
 		
-		// 6. 소유중인 총으로 등록
 		ownedPistol = pistolActor;
 		
-		// 7. 총의 소유자를 자신으로 등록
 		ownedPistol->SetOwner(this);
 		
-		// 8. 총 소유 상태로 변경
 		bHasPistol = true;
 		
 		MulticastRPC_TakePistol(pistolActor);		

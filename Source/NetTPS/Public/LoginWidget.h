@@ -1,122 +1,105 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "LoginWidget.generated.h"
 
-/**
- * 
- */
+class UButton;
+class UEditableText;
+class UNetGameInstance;
+class UScrollBox;
+class USessionSlotWidget;
+class USlider;
+class UTextBlock;
+class UWidgetSwitcher;
+struct FSessionInfo;
+
+// 로비 화면에서 방 생성, 세션 검색, 입장 준비 UI를 관리합니다.
 UCLASS()
 class NETTPS_API ULoginWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(BindWidget))
-	class UButton* btn_createRoom;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(BindWidget))
-	class UEditableText* edit_roomName;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(BindWidget))
-	class USlider* slider_playerCount;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(BindWidget))
-	class UTextBlock* txt_playerCount;
-	
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UWidgetSwitcher* WidgetSwitcher;
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UButton* btn_createSession;
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UButton* btn_findSession;
-		
-	
-	UFUNCTION()
-	void SwitchCreatePanel();
-	
-	UFUNCTION()
-	void SwitchFindPanel();
-	
-	
-	// 메인화면 돌아가기 버튼
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UButton* btn_back;
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UButton* btn_back_1;
-	
-	// 방 검색 버튼
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UButton* btn_find;
-		
-	// 검색중 메세지
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UTextBlock* txt_findingMsg;
-	
-	// 사용자 이름
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UEditableText* edit_userName;
-	
-	
-	UFUNCTION()
-	void BackToMain();
-	
-	// 방찾기 버튼 클릭시 호출될 콜백	
-	UFUNCTION()
-	void OnClickedFindSession();
-	
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UButton* btn_GameToStart;
-	
-	UFUNCTION()
-	void OnClickedGameToStart();
-	
-	
-	
-	
-public:
-	// --------------- 세션 슬롯 -------------------
-	// Canvas_FindRoom 의 스크롤박스 위젯
-	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
-	class UScrollBox* scroll_roomList;
-	
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class USessionSlotWidget> sessionInfoWidget;
-	
-	UFUNCTION()
-	void AddSlotWidget(const struct FSessionInfo& sessionInfo);
-	
-	// 방찾기 상태 이벤트 콜백
-	UFUNCTION()
-	void OnChangeButtonEnable(bool bIsSearching);
-	
-	
-	
-	
-	UPROPERTY()
-	class UNetGameInstance* gi;
-	
-	
+
 public:
 	virtual void NativeConstruct() override;
-	
+
+	// 메인 패널
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(BindWidget))
+	UButton* btn_createRoom;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(BindWidget))
+	UEditableText* edit_roomName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(BindWidget))
+	USlider* slider_playerCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(BindWidget))
+	UTextBlock* txt_playerCount;
+
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UWidgetSwitcher* WidgetSwitcher;
+
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UButton* btn_createSession;
+
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UButton* btn_findSession;
+
+	UFUNCTION()
+	void SwitchCreatePanel();
+
+	UFUNCTION()
+	void SwitchFindPanel();
+
+	// 공통 뒤로가기
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UButton* btn_back;
+
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UButton* btn_back_1;
+
+	UFUNCTION()
+	void BackToMain();
+
+	// 세션 검색
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UButton* btn_find;
+
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UTextBlock* txt_findingMsg;
+
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UEditableText* edit_userName;
+
+	UFUNCTION()
+	void OnClickedFindSession();
+
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UButton* btn_GameToStart;
+
+	UFUNCTION()
+	void OnClickedGameToStart();
+
+	// 세션 슬롯 목록
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	UScrollBox* scroll_roomList;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<USessionSlotWidget> sessionInfoWidget;
+
+	UFUNCTION()
+	void AddSlotWidget(const FSessionInfo& sessionInfo);
+
+	// 세션 검색 상태 변경 콜백
+	UFUNCTION()
+	void OnChangeButtonEnable(bool bIsSearching);
+
+	UPROPERTY()
+	UNetGameInstance* gi;
+
 	UFUNCTION()
 	void CreateRoom();
-	
-	// Slider Callback
+
 	UFUNCTION()
 	void OnValueChanged(float Value);
 };
-
-
-
-
-
-
-
-
-
-

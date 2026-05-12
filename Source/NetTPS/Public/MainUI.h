@@ -1,118 +1,90 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "MainUI.generated.h"
 
-/**
- * 
- */
+class UButton;
+class UChatWidget;
+class UEditableText;
+class UHorizontalBox;
+class UImage;
+class UScrollBox;
+class UTextBlock;
+class UUniformGridPanel;
+class UWidgetAnimation;
+
+// 전투 화면의 조준점, 탄약, 체력, 게임오버, 채팅 UI를 관리합니다.
 UCLASS()
 class NETTPS_API UMainUI : public UUserWidget
 {
 	GENERATED_BODY()
-	
-public:
-	UPROPERTY(BlueprintReadWrite, Category="UI", meta=(BindWidget))
-	class UImage* img_Crosshair;
-	
-	// 크로스헤어가 보일지여부 처리
-	void ShowCrosshair(bool isShow);
-	
-	// 총알 위젯이 추가될 패널
-	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-	class UUniformGridPanel* BulletPanel;
-	
-	// 총알 위젯클래스
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Bullet")
-	TSubclassOf<class UUserWidget> BulletUIFactory;
-	
-	// 총알위젯 추가
-	void AddBullet();
-	// 총알제거
-	void PopBullet(int32 index);
-	
-	// 모든 총알UI 제거
-	void RemoveAllAmmo();
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="HP")
-	float HP = 1.0f;
-	
-	
-	// DamageUI 애니메이션
-	UPROPERTY(EditDefaultsOnly, meta=(BindWidgetAnim), Transient, Category="MySettings")
-	class UWidgetAnimation* DamageAnim;
-	
-	// 피격처리 애니메이션 재생
-	void PlayDamageAnimation();
-	
-	
-public:
-	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-	class UHorizontalBox* GameoverUI;
-	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-	class UButton* btn_retry;
-	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-	class UButton* btn_exit;
-	
-	// 사용자 목록
-	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-	class UTextBlock* txt_users;
-	
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-	
-	
+
 public:
 	virtual void NativeConstruct() override;
-	
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	// 조준점
+	UPROPERTY(BlueprintReadWrite, Category="UI", meta=(BindWidget))
+	UImage* img_Crosshair;
+
+	void ShowCrosshair(bool isShow);
+
+	// 탄약 UI
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UUniformGridPanel* BulletPanel;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Bullet")
+	TSubclassOf<UUserWidget> BulletUIFactory;
+
+	void AddBullet();
+	void PopBullet(int32 index);
+	void RemoveAllAmmo();
+
+	// 체력 UI
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="HP")
+	float HP = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, meta=(BindWidgetAnim), Transient, Category="MySettings")
+	UWidgetAnimation* DamageAnim;
+
+	void PlayDamageAnimation();
+
+	// 게임오버 UI
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UHorizontalBox* GameoverUI;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* btn_retry;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* btn_exit;
+
 	UFUNCTION()
 	void OnRetry();
-	
+
 	UFUNCTION()
 	void OnExit();
-	
-	
-	
-	
-	// --------------- 채팅 -----------------
-public:
+
+	// 접속자 목록
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* txt_users;
+
+	// 채팅 UI
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class UChatWidget> chatWidget;
-	
+	TSubclassOf<UChatWidget> chatWidget;
+
 	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-	class UScrollBox* scroll_msgList;
-	
+	UScrollBox* scroll_msgList;
+
 	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-	class UEditableText* edit_input;
-	
+	UEditableText* edit_input;
+
 	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-	class UButton* btn_send;
-	
-	
+	UButton* btn_send;
+
 	UFUNCTION()
 	void SendMsg();
-	
+
 	void ReceiveMsg(const FString& msg);
-	
-	
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

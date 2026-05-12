@@ -4,5 +4,4 @@
 
 ANetTPSGameMode::ANetTPSGameMode()
 {
-	// stub
 }

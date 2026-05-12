@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "NetActor.h"
 
 #include "EngineUtils.h"
@@ -10,23 +7,19 @@
 
 #include "NetGameInstance.h"
 
-// Sets default values
 ANetActor::ANetActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	
 	// 대역폭 조정
-	NetUpdateFrequency = 1.0f;
+	SetNetUpdateFrequency(1.0f);
 	
 	meshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	RootComponent = meshComp;
 	meshComp->SetRelativeScale3D(FVector(0.5f));
-
 }
 
-// Called when the game starts or when spawned
 void ANetActor::BeginPlay()
 {
 	Super::BeginPlay();
@@ -42,7 +35,6 @@ void ANetActor::BeginPlay()
 				if ( gi->IsInRoom() )
 				{
 					FLinearColor MatColor = FLinearColor(FMath::RandRange(0.0f, 0.3f), FMath::RandRange(0.0f, 0.3f), FMath::RandRange(0.0f, 0.3f), 1.0f);
-					//OnRep_ChangeMatColor();
 					ServerRPC_ChangeColor(MatColor);					
 				}
 			}), 1, true);
@@ -50,7 +42,6 @@ void ANetActor::BeginPlay()
 	
 }
 
-// Called every frame
 void ANetActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -59,7 +50,7 @@ void ANetActor::Tick(float DeltaTime)
 	FindOwner();
 	
 	
-	// Server 일 경우
+	// 서버는 실제 회전 값을 갱신하고 클라이언트는 마지막 동기화 값으로 보간합니다.
 	if ( HasAuthority() )
 	{
 		AddActorLocalRotation(FRotator(0.0f, 50.0f * DeltaTime, 0.0f));
@@ -67,23 +58,24 @@ void ANetActor::Tick(float DeltaTime)
 	}
 	else
 	{
-		// 경과시간증가		
+		// 경과 시간 증가
 		currentTime += DeltaTime;
 		
-		// 0으로 나눠지지 않도록 lastTime 값 체크
+		// 0으로 나눠지지 않도록 lastTime 값을 확인합니다.
 		if ( lastTime < KINDA_SMALL_NUMBER)
 		{
 			return;
 		}
 		
-		// 이전경과시간과 현재 경과시간의 비율계산
+		// 이전 동기화 간격 대비 현재 진행 비율을 계산합니다.
 		float lerpRatio = currentTime / lastTime;
-		// 이전 경과시간 만큼 회전할 것으로 새로운 회전값 계산
+
+		// 이전 동기화 간격만큼 더 회전했을 값을 예측합니다.
 		float newYaw = RotYaw + 50.0f * lastTime;
-		// 예측되는 값으로 진행된 시간만큼 보간처리
+
+		// 예측 값까지 현재 진행 비율만큼 보간합니다.
 		float lerpYaw = FMath::Lerp(RotYaw, newYaw, lerpRatio);
 		
-		// 최종 적용
 		FRotator CurRot = GetActorRotation();
 		CurRot.Yaw = lerpYaw;
 		SetActorRotation(CurRot);
@@ -113,13 +105,6 @@ void ANetActor::PrintNetLog()
 	const FString logStr = FString::Printf(TEXT("Connection : %s\nLocalRole : %s\nRemoteRole : %s\nOwnerName : %s"), *conStr, *LOCALROLE, *REMOTEROLE, *ownerName);
 	
 	DrawDebugString( GetWorld(), GetActorLocation() + FVector::UpVector * 100.0f, logStr, nullptr, FColor::White, 0, true, 1);
-	
-	/*
-	
-	const FString logStr = FString::Printf(TEXT("Connection : %s\nOwnerName : %s"), *conStr, *ownerName);
-	
-	DrawDebugString( GetWorld(), GetActorLocation() + FVector::UpVector * 100.0f, logStr, nullptr, FColor::White, 0, true, 1);
-	*/
 }
 
 void ANetActor::FindOwner()
@@ -141,7 +126,7 @@ void ANetActor::FindOwner()
 			}
 		}
 		
-		// Owner 설정
+		// 탐색된 플레이어를 Owner로 설정합니다.
 		if ( GetOwner() != newOwner )
 		{
 			SetOwner(newOwner);			
@@ -154,13 +139,11 @@ void ANetActor::OnRep_RotYaw()
 	FRotator NewRot = GetActorRotation();
 	NewRot.Yaw = RotYaw;
 	SetActorRotation(NewRot);
-	// 업데이트된 경과시간 저장
+	// 마지막 동기화 간격을 저장한 뒤 누적 시간을 초기화합니다.
 	lastTime = currentTime;
-	// 경과시간 초기화
 	currentTime = 0.0f;
 }
 
-// 색상동기화
 void ANetActor::OnRep_ChangeMatColor()
 {
 	if ( Mat )
@@ -197,13 +180,6 @@ void ANetActor::ClientRPC_ChangeColor_Implementation(
 void ANetActor::ServerRPC_ChangeColor_Implementation(
 	const FLinearColor newColor)
 {
-	/*
-	if ( Mat )
-	{
-		Mat->SetVectorParameterValue(TEXT("FloorColor"), newColor);
-	}
-	*/
-	//ClientRPC_ChangeColor(newColor);
 	MulticastRPC_ChangeColor(newColor);
 }
 

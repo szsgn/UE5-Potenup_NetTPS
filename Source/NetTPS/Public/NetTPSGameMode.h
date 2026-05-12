@@ -6,19 +6,12 @@
 #include "GameFramework/GameModeBase.h"
 #include "NetTPSGameMode.generated.h"
 
-/**
- *  Simple GameMode for a third person game
- */
+// TPS 테스트 맵에서 사용하는 기본 게임 모드입니다.
 UCLASS(abstract)
 class ANetTPSGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
 public:
-	
-	/** Constructor */
 	ANetTPSGameMode();
 };
-
-
-

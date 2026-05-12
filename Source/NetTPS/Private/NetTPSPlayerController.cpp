@@ -13,15 +13,13 @@ void ANetTPSPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// only spawn touch controls on local player controllers
+	// 로컬 플레이어 컨트롤러에만 터치 UI를 생성합니다.
 	if (ShouldUseTouchControls() && IsLocalPlayerController())
 	{
-		// spawn the mobile controls widget
 		MobileControlsWidget = CreateWidget<UUserWidget>(this, MobileControlsWidgetClass);
 
 		if (MobileControlsWidget)
 		{
-			// add the controls to the player screen
 			MobileControlsWidget->AddToPlayerScreen(0);
 
 		} else {
@@ -37,10 +35,9 @@ void ANetTPSPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	// only add IMCs for local player controllers
+	// 로컬 플레이어 컨트롤러에만 입력 매핑 컨텍스트를 추가합니다.
 	if (IsLocalPlayerController())
 	{
-		// Add Input Mapping Contexts
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 		{
 			for (UInputMappingContext* CurrentContext : DefaultMappingContexts)
@@ -48,7 +45,7 @@ void ANetTPSPlayerController::SetupInputComponent()
 				Subsystem->AddMappingContext(CurrentContext, 0);
 			}
 
-			// only add these IMCs if we're not using mobile touch input
+			// 터치 입력을 쓰지 않을 때만 키보드/마우스 전용 매핑을 추가합니다.
 			if (!ShouldUseTouchControls())
 			{
 				for (UInputMappingContext* CurrentContext : MobileExcludedMappingContexts)
@@ -62,6 +59,5 @@ void ANetTPSPlayerController::SetupInputComponent()
 
 bool ANetTPSPlayerController::ShouldUseTouchControls() const
 {
-	// are we on a mobile platform? Should we force touch?
 	return SVirtualJoystick::ShouldDisplayTouchInterface() || bForceTouchControls;
 }

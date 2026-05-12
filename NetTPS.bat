@@ -1,1 +1,1 @@
-"C:\Program Files\Epic Games\UE_5.7\Engine\Binaries\Win64\UnrealEditor.exe" "C:\Work\NetTPS\NetTPS.uproject" -game -ResX=600 -ResY=400 -WinX=100 -WinY=100 -WINDOWED -log
+"C:\Program Files\Epic Games\UE_5.7\Engine\Binaries\Win64\UnrealEditor.exe" "C:\Users\user\Documents\Unreal Projects\UE5-Potenup_NetTPS" -game -ResX=600 -ResY=400 -WinX=100 -WinY=100 -WINDOWED -log

@@ -1,56 +1,36 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "NetTPSPlayerController.h"
 #include "NetPlayerController.generated.h"
 
-/**
- * 
- */
+class ANetTPSGameMode;
+class UMainUI;
+
+// 전투 맵에서 리스폰, 관전 전환, 메인 UI 생성을 담당하는 플레이어 컨트롤러입니다.
 UCLASS()
 class NETTPS_API ANetPlayerController : public ANetTPSPlayerController
 {
 	GENERATED_BODY()
-	
+
 private:
 	UPROPERTY()
-	class ANetTPSGameMode* gm;
-	
-	
+	ANetTPSGameMode* gm;
+
 public:
 	virtual void BeginPlay() override;
-	
-public:
+
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_RespawnPlayer();
+
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_ChangeToSpectator();
-	
-	
-	// 사용할 위젯 클래스
+
+	// 메인 UI 위젯 클래스
 	UPROPERTY(EditDefaultsOnly, Category="UI")
-	TSubclassOf<class UMainUI> mainUIWidget;
-	// mainUIWidget 으로 부터 만들어진 인스턴스
+	TSubclassOf<UMainUI> mainUIWidget;
+
+	// 생성된 메인 UI 인스턴스
 	UPROPERTY()
-	class UMainUI* mainUI;
-	
+	UMainUI* mainUI;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
